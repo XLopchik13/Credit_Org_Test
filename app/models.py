@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, Table
+from sqlalchemy import Column, Integer, String, ForeignKey, Float, Table, ARRAY
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -18,7 +18,7 @@ class Building(Base):
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
 
-    organizations = relationship("Organization", back_populates="buildings")
+    organizations = relationship("Organization", back_populates="building")
 
 
 class Activity(Base):
@@ -28,9 +28,13 @@ class Activity(Base):
     name = Column(String, nullable=False)
     parent_id = Column(Integer, ForeignKey('activities.id'), nullable=True)
 
-    parent = relationship("Activity", remote_side=[id], backref="children")
-    children = relationship("Activity", back_populates="parent")
-    organizations = relationship("Organization", secondary=organization_activity, back_populates="activities")
+    parent = relationship(
+        "Activity",
+        remote_side=[id],
+        backref="children",
+        cascade="all, delete-orphan",
+        single_parent=True
+    )
 
 
 class Organization(Base):
@@ -38,8 +42,11 @@ class Organization(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    phone_numbers = Column(String, nullable=True)
+    phone_numbers = Column(ARRAY(String))
     building_id = Column(Integer, ForeignKey('buildings.id'))
 
     building = relationship("Building", back_populates="organizations")
     activities = relationship("Activity", secondary=organization_activity, backref="organizations")
+
+
+Building.organizations = relationship("Organization", back_populates="building")

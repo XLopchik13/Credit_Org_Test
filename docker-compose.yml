@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:15
+    container_name: credit_db
+    environment:
+      POSTGRES_DB: credit_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    image: credit_image
+    build:
+      context: .
+    container_name: credit_app
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
